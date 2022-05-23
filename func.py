@@ -8,7 +8,7 @@ Created on Mon May 23 14:08:36 2022
 import cv2
 import numpy as np
 
-def find_match(img1, img2, topK = 150):
+def find_match(img1, img2, topK = 200):
     img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     
@@ -87,7 +87,7 @@ def RANSAC_F(point1, point2):
             best_F = F
     return best_F
 
-def solve_translation(F):
+def solve_translation(F, point1, point2):
     # other method to check (from wiki)
 # =============================================================================
 #     W = np.array([[0, -1, 0],
@@ -107,7 +107,8 @@ def solve_translation(F):
     u, s, vt = np.linalg.svd(np.matmul(F, F.T))
     T = vt[-1]
     T = T / np.sum(T * T)
-    print(T / T[-1])
+    if T[0] < 0:
+        T = -T
     return T
 
 def solve_rotation(F, T):
@@ -116,16 +117,6 @@ def solve_rotation(F, T):
                   [0, 0, 1.]])
     u, vs, vt = np.linalg.svd(F)
     R = np.dot(np.dot(u, np.linalg.inv(W)), u)
-    print(R)
-    W = np.array([np.dot(F[:, 0], T) + np.cross(F[:, 1], F[:, 2]),
-                  np.dot(F[:, 1], T) + np.cross(F[:, 2], F[:, 1]),
-                  np.dot(F[:, 2], T) + np.cross(F[:, 0], F[:, 1])])
-    print(W)
-    W = np.array([np.dot(F[0], T) + np.cross(F[1], F[2]),
-                  np.dot(F[1], T) + np.cross(F[2], F[1]),
-                  np.dot(F[2], T) + np.cross(F[0], F[1])])
-    print(W)
-    print(np.dot(W[0] , W[1]))
     return R
 
 def draw_epipole_lines(img1, lines, pts1):
