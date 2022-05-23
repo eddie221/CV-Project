@@ -1,7 +1,7 @@
 # CV Project -- Stereo Image for Depth Map
 ## TODO: (If the function not finish yet, add 0.05 to the version. e.g. version 0.25)
 - [X] Find Essential matrix or Fundamental matrix (in func.py) (version 0.2)
-- [ ] Find offset vector (T) (in func.py) (version 0.4)
+- [X] Find translation vector (T) (in func.py) (version 0.4)
 - [ ] Find rotation matrix (R) (in func.py) (version 0.6)
 - [ ] Rectified two images (in rectified.py) (version 0.8)
 - [ ] Get the Depth Map (in func.py) (version 1.0)

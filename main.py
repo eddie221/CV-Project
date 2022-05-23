@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import glob
 import numpy as np
 import cv2
-from func import find_match, RANSAC_F, solve_offset, solve_rotation, draw_epipole_lines
+from func import find_match, RANSAC_F, solve_translation, solve_rotation, draw_epipole_lines
 from rectified import rectified
 
 
@@ -90,7 +90,6 @@ if __name__ == "__main__":
 # =============================================================================
     match_keypoint1, match_keypoint2 = find_match(img1, img2)
     F = RANSAC_F(match_keypoint1, match_keypoint2)
-    test_idx = 28
     
     lines1 = np.matmul(match_keypoint2, F)
     lines2 = np.matmul(F, match_keypoint1.T).T
@@ -99,14 +98,14 @@ if __name__ == "__main__":
     lines2 = lines2.reshape(-1,3)
     img1 = draw_epipole_lines(img1, lines1, match_keypoint1[:, :2])
     img2 = draw_epipole_lines(img2, lines2, match_keypoint2[:, :2])
-    plt.figure()
-    plt.imshow(img1[..., ::-1])
-    plt.figure()
-    plt.imshow(img2[..., ::-1])
 # =============================================================================
-#     T = solve_offset(F)
-#     R = solve_rotation(F, T)
+#     plt.figure()
+#     plt.imshow(img1[..., ::-1])
+#     plt.figure()
+#     plt.imshow(img2[..., ::-1])
 # =============================================================================
+    T = solve_translation(F)
+    R = solve_rotation(F, T)
     #img1_rect, img2_rect, point1_rect, point2_rect = rectified(img1, img2, match_keypoint1, match_keypoint2, F)
     
 # =============================================================================

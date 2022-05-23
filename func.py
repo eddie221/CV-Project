@@ -87,17 +87,46 @@ def RANSAC_F(point1, point2):
             best_F = F
     return best_F
 
-def solve_offset(F):
+def solve_translation(F):
+    # other method to check (from wiki)
+# =============================================================================
+#     W = np.array([[0, -1, 0],
+#                   [1, 0, 0],
+#                   [0, 0, 1.]])
+#     u, vs, vt = np.linalg.svd(F)
+#     s = np.zeros((3,3))
+#     for i in range(2):
+#         s[i][i] = vs[1]
+#     t = np.dot(np.dot(np.dot(u, W), s), u.T)
+#     x = t[2, 1]
+#     y = t[0, 2]
+#     z = t[1, 0]
+#     t = np.array([x, y, z])
+#     print(t / t[-1])
+# =============================================================================
     u, s, vt = np.linalg.svd(np.matmul(F, F.T))
     T = vt[-1]
     T = T / np.sum(T * T)
+    print(T / T[-1])
     return T
 
-def solve_rotation(E, T):
-    W = np.array([np.cross(E[:, 0], T) + np.cross(E[:, 1], E[:, 2]),
-                  np.cross(E[:, 1], T) + np.cross(E[:, 2], E[:, 0]),
-                  np.cross(E[:, 2], T) + np.cross(E[:, 0], E[:, 1])])
-    return W
+def solve_rotation(F, T):
+    W = np.array([[0, -1, 0],
+                  [1, 0, 0],
+                  [0, 0, 1.]])
+    u, vs, vt = np.linalg.svd(F)
+    R = np.dot(np.dot(u, np.linalg.inv(W)), u)
+    print(R)
+    W = np.array([np.dot(F[:, 0], T) + np.cross(F[:, 1], F[:, 2]),
+                  np.dot(F[:, 1], T) + np.cross(F[:, 2], F[:, 1]),
+                  np.dot(F[:, 2], T) + np.cross(F[:, 0], F[:, 1])])
+    print(W)
+    W = np.array([np.dot(F[0], T) + np.cross(F[1], F[2]),
+                  np.dot(F[1], T) + np.cross(F[2], F[1]),
+                  np.dot(F[2], T) + np.cross(F[0], F[1])])
+    print(W)
+    print(np.dot(W[0] , W[1]))
+    return R
 
 def draw_epipole_lines(img1, lines, pts1):
     h, w = img1.shape[0], img1.shape[1]
