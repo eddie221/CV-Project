@@ -4,8 +4,9 @@
 - [X] Find translation vector (T) (in func.py) (version 0.4)
 - [X] Find rotation matrix (R) (in func.py) (version 0.6) (using openCV to solve)
 - [X] Rectified two images (in rectified.py) (version 0.8) (using openCV to solve)
-- [ ] Get the Disparity Map (version 0.9)
+- [X] Get the Disparity Map (in correspondence.py) (version 0.9)
 - [ ] Get the Depth Map (in func.py) (version 1.0)
+- The unstable reason because for using RANSAC to get  F
 
 ## Dataset:
  - https://vision.middlebury.edu/stereo/data/scenes2001/

@@ -7,6 +7,7 @@ Created on Mon May 23 14:08:36 2022
 
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 def find_match(img1, img2, topK = 200):
     img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
@@ -37,7 +38,11 @@ def find_match(img1, img2, topK = 200):
     match_keypoint1 = np.append(match_keypoint1, np.ones((match_keypoint1.shape[0], 1)), 1)
     match_keypoint2 = np.append(match_keypoint2, np.ones((match_keypoint2.shape[0], 1)), 1)
     
-    #img3 = cv2.drawMatches(img1, keypoints_1, img2, keypoints_2, matches, None, flags = 2)
+# =============================================================================
+#     img3 = cv2.drawMatches(img1, keypoints_1, img2, keypoints_2, matches, None, flags = 2)
+#     plt.figure()
+#     plt.imshow(img3[..., ::-1])
+# =============================================================================
     # -------------------------------------------------------------------------
     return match_keypoint1, match_keypoint2
 
@@ -79,8 +84,9 @@ def RANSAC_F(point1, point2):
         
         for j in range(point1.shape[0]):
             distance = abs(np.dot(point2[j].T, np.dot(F, point1[j])))
-            if distance <= threshold:
+            if distance < threshold:
                 count += 1
+                
         if count > max_count:
             max_count = count
             print("max_count : ", max_count)
@@ -119,12 +125,3 @@ def solve_rotation(F, T):
     R = np.dot(np.dot(u, np.linalg.inv(W)), u)
     return R
 
-def draw_epipole_lines(img1, lines, pts1):
-    h, w = img1.shape[0], img1.shape[1]
-    for r, pt1 in zip(lines, pts1):
-        color = tuple(np.random.randint(0, 255, 3).tolist())
-        x0, y0 = map(int, [0, -r[2] / r[1]])
-        x1, y1 = map(int, [w, -(r[2] + r[0] * w) / r[1]])
-        img1 = cv2.line(img1, (x0,y0), (x1,y1), color,1)
-        img1 = cv2.circle(img1, tuple(pt1.astype(np.int32)), 5, color, -1)
-    return img1
