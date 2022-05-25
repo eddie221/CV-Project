@@ -6,7 +6,7 @@
 - [X] Rectified two images (in rectified.py) (version 0.8) (using openCV to solve)
 - [X] Get the Disparity Map (in correspondence.py) (version 0.9)
 - [ ] Get the Depth Map (in func.py) (version 1.0)
-- The unstable reason because for using RANSAC to get  F
+- The unstable reason because for using RANSAC to get F
 
 ## Dataset:
  - https://vision.middlebury.edu/stereo/data/scenes2001/
@@ -15,5 +15,9 @@
 1. Get T and R from Essential Matrix. 
  - https://en.wikipedia.org/wiki/Essential_matrix
  - https://web.stanford.edu/class/cs231a/course_notes/03-epipolar-geometry.pdf
+ - https://www5.cs.fau.de/fileadmin/lectures/2014s/Lecture.2014s.IMIP/exercises/4/exercise4.pdf
+ - Normalize eight point algorithm
+     - https://github.com/fredzzhang/Normalized-Eight-Point-Algorithm
+ 
 2. Similar work
  - https://github.com/savnani5/Depth-Estimation-using-Stereovision

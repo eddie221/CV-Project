@@ -31,8 +31,8 @@ def block_match(s_x, s_y, target, img, block_size, x_range, y_range):
     return min_center_x
 
 def ssd_correspond(img1, img2):
-    block_size = 5
-    x_search_range = 3
+    block_size = 15
+    x_search_range = 20
     y_search_range = 1
     
     h, w = img1.shape[0], img1.shape[1]
@@ -48,4 +48,4 @@ def ssd_correspond(img1, img2):
     
     disp_map = (disp_map - disp_map.min()) / (disp_map.max() - disp_map.min())
     plt.figure()
-    plt.imshow(disp_map)
+    plt.imshow(disp_map * 255)
