@@ -102,6 +102,7 @@ def solve_fundamental_matrix(point1, point2):
         s[i][i] = vs[i]
     F = np.dot(np.dot(uf, s), vft)
     return F
+
     
 def RANSAC_F(point1, point2, threshold = 0.003):
     

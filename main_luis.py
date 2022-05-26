@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import glob
 import numpy as np
 import cv2
-from func import find_match, RANSAC_F, solve_translation, solve_rotation, normalize_point, solve_fundamental_matrix
+from func import find_match, solve_translation, solve_rotation, normalize_point, solve_fundamental_matrix
+from func_luis import point_normalization, RANSAC_F
 from rectified import rectified, rectified2, rect_test
 from correspondence import ssd_correspond
 
@@ -26,16 +27,19 @@ if __name__ == "__main__":
     match_keypoint1, match_keypoint2 = find_match(img1, img2)
     #match_keypoint1, match_keypoint2, T1, T2 = normalize_point(img1, img2, match_keypoint1, match_keypoint2)
     #F = solve_fundamental_matrix(match_keypoint1, match_keypoint2)
-    F = RANSAC_F(match_keypoint1, match_keypoint2, threshold = 5e-4)
-    T = solve_translation(F, match_keypoint1, match_keypoint2)
-    R = solve_rotation(F, T)
-    print("F : \n", F)
-    print("T : \n", T)
-    print("R : \n", R)
+    norm_kp1, norm_kp2 = point_normalization(img1, img2, match_keypoint1,match_keypoint2)
+     
+    F = RANSAC_F(norm_kp1, norm_kp2, threshold = 5e-4)
+
+    # T = solve_translation(F, match_keypoint1, match_keypoint2)
+    # R = solve_rotation(F, T)
+    # print("F : \n", F)
+    # print("T : \n", T)
+    # print("R : \n", R)
     
-    # rectified the image
-    img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-    img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+    # # rectified the image
+    # img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
+    # img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     ## method 1 (opencv)
     #img1_rect, img2_rect, point1_rect, point2_rect = rectified(img1, img2, match_keypoint1, match_keypoint2, F)
     ## method 2 
