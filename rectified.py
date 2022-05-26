@@ -32,7 +32,25 @@ def rectified2(img, point, T):
     e3 = np.cross(e1, e2)
     R_rect = np.array([e1, e2, e3])
     
-    img_rect = cv2.warpPerspective(img, R_rect, (img.shape[1], img.shape[0]))
+    corner = np.array([[0, 0, 1],
+                        [img.shape[1], 0, 1],
+                        [0, img.shape[0], 1],
+                        [img.shape[1], img.shape[0], 1]])
+    
+    new_corner = np.dot(R_rect, corner.T).T
+    new_corner = new_corner / new_corner[:, -1:]
+    
+    offset_x = abs(new_corner[:, 0].min())
+    offset_y = abs(new_corner[:, 1].min())
+    
+    offset = np.array([[1, 0, offset_x],
+                       [0, 1, offset_y],
+                       [0, 0, 1]])
+    R_rect = np.dot(offset, R_rect)
+    
+    img_rect = cv2.warpPerspective(img, R_rect,
+                                   (int(new_corner[:, 0].max() - new_corner[:, 0].min()),
+                                    int(new_corner[:, 1].max() - new_corner[:, 1].min())))
     point = np.dot(point, R_rect)
     point = point / point[:, -1:]
     return img_rect, point, R_rect

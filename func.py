@@ -9,22 +9,34 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def find_match(img1, img2, topK = 250):
+def find_match(img1, img2, topK = 250, method = "ORB"):
     img1_gray = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     img2_gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     
-    # sift find matching point ------------------------------------------------
-    sift = cv2.xfeatures2d.SIFT_create()
-    
-    keypoints_1, descriptors_1 = sift.detectAndCompute(img1_gray, None)
-    keypoints_2, descriptors_2 = sift.detectAndCompute(img2_gray, None)
+    if method == "SIFT":
+        # sift find matching point --------------------------------------------
+        sift = cv2.xfeatures2d.SIFT_create()
+        
+        keypoints_1, descriptors_1 = sift.detectAndCompute(img1_gray, None)
+        keypoints_2, descriptors_2 = sift.detectAndCompute(img2_gray, None)
+        
+        bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck = True)
+        # ---------------------------------------------------------------------
+    elif method == "ORB" :
+        # orb find matching point ---------------------------------------------
+        orb = cv2.ORB_create(nfeatures=10000)
+        
+        keypoints_1, descriptors_1 = orb.detectAndCompute(img1_gray, None)
+        keypoints_2, descriptors_2 = orb.detectAndCompute(img2_gray, None)
+        
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck = True)
+        # ---------------------------------------------------------------------
     
 # =============================================================================
 #     img1_gray = cv2.drawKeypoints(img1_gray, keypoints_1, img1_gray)
 #     img2_gray = cv2.drawKeypoints(img2_gray, keypoints_2, img2_gray)
 # =============================================================================
     
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck = True)
     matches = bf.match(descriptors_1, descriptors_2)
     matches = sorted(matches, key = lambda x:x.distance)
     matches = matches[:topK]
@@ -56,9 +68,16 @@ def normalize_point(point1, point2):
     centroid2_x = np.mean(point2[:, 0])
     centroid2_y = np.mean(point2[:, 1])
     
-    scale1 = np.sqrt(2) * point1.shape[0] / np.sum(np.sqrt((point1[:, 0] - centroid1_x) ** 2 + (point1[:, 1] - centroid1_y) ** 2))
-    scale2 = np.sqrt(2) * point2.shape[0] / np.sum(np.sqrt((point2[:, 0] - centroid2_x) ** 2 + (point2[:, 1] - centroid2_y) ** 2))
+    # for average distance equal to 2 time2
+# =============================================================================
+#     scale1 = np.sqrt(2) * point1.shape[0] / np.sum(np.sqrt((point1[:, 0] - centroid1_x) ** 2 + (point1[:, 1] - centroid1_y) ** 2))
+#     scale2 = np.sqrt(2) * point2.shape[0] / np.sum(np.sqrt((point2[:, 0] - centroid2_x) ** 2 + (point2[:, 1] - centroid2_y) ** 2))
+# =============================================================================
     
+    # for standard deviation equal to sqrt(2)
+    scale1 = np.sqrt(2 * point1.shape[0] / np.sum(np.sqrt((point1[:, 0] - centroid1_x) ** 2 + (point1[:, 1] - centroid1_y) ** 2) ** 2))
+    scale2 = np.sqrt(2 * point2.shape[0] / np.sum(np.sqrt((point2[:, 0] - centroid2_x) ** 2 + (point2[:, 1] - centroid2_y) ** 2) ** 2))
+
     T1 = np.array([[scale1, 0, -scale1 * centroid1_x],
                    [0, scale1, -scale1 * centroid1_y],
                    [0, 0, 1]])
@@ -66,11 +85,13 @@ def normalize_point(point1, point2):
     T2 = np.array([[scale2, 0, -scale2 * centroid2_x],
                    [0, scale2, -scale2 * centroid2_y],
                    [0, 0, 1]])
-    
+
     point1 = np.dot(T1, point1.T).T
     point2 = np.dot(T2, point2.T).T
-    assert int(np.mean(np.sqrt(np.sum(((point1 - np.array([[0, 0, 1]])) ** 2), axis = 1))) * 1000) == int(np.sqrt(2) * 1000), "large error when normalize"
-    assert int(np.mean(np.sqrt(np.sum(((point2 - np.array([[0, 0, 1]])) ** 2), axis = 1))) * 1000) == int(np.sqrt(2) * 1000), "large error when normalize"
+# =============================================================================
+#     assert int(np.mean(np.sqrt(np.sum(((point1 - np.array([[0, 0, 1]])) ** 2), axis = 1))) * 1000) == int(np.sqrt(2) * 1000), "large error when normalize"
+#     assert int(np.mean(np.sqrt(np.sum(((point2 - np.array([[0, 0, 1]])) ** 2), axis = 1))) * 1000) == int(np.sqrt(2) * 1000), "large error when normalize"
+# =============================================================================
     
     return point1, point2, T1, T2
     
@@ -103,15 +124,19 @@ def solve_fundamental_matrix(point1, point2):
     F = np.dot(np.dot(uf, s), vft)
     return F
     
-def RANSAC_F(point1, point2, threshold = 0.003):
-    
+def RANSAC_F(point1, point2, threshold = 0.005):
+# =============================================================================
+#     point1 = point1[:8]
+#     point2 = point2[:8]
+# =============================================================================
     max_count = 0
     best_F = 0
     for i in range(1000):
         count = 0
         indexes = np.random.choice(point1.shape[0], 8)
+        indexes = sorted(indexes)
         F = solve_fundamental_matrix(point1[indexes], point2[indexes])
-        
+        #F = solve_fundamental_matrix(point1, point2)
         for j in range(point1.shape[0]):
             distance = abs(np.dot(point2[j].T, np.dot(F, point1[j])))
             #print(distance)

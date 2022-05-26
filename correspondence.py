@@ -9,6 +9,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tqdm
 
+def sum_square_error(target, source):
+    return np.sum((target - source) ** 2)
+
+def cosine_similarity(target, source):
+    return np.dot(target, source) / (np.sqrt(np.sum(target ** 2)) * np.sqrt(np.sum(source ** 2)) + 1e-8)
+
 def block_match(s_x, s_y, target, img, block_size, x_range, y_range):
     x_start = max(0, s_x - block_size)
     y_start = max(0, s_y - block_size)
@@ -20,17 +26,17 @@ def block_match(s_x, s_y, target, img, block_size, x_range, y_range):
         for j in range(y_start, y_end):
             try:
                 source = img[j : j + block_size, i : i + block_size]
-                distance = np.sum((target - source) ** 2)
+                distance = sum_square_error(target, source)
+                #distance = 1 - cosine_similarity(target.reshape(-1), source.reshape(-1))
             except:
                 print(x_end, j)
-            
             if distance < min_dist:
                 min_dist = distance
                 min_center_x = i + block_size // 2 
     
     return min_center_x
 
-def ssd_correspond(img1, img2):
+def correspond(img1, img2):
     block_size = 15
     x_search_range = 20
     y_search_range = 1
@@ -38,7 +44,6 @@ def ssd_correspond(img1, img2):
     h, w = img1.shape[0], img1.shape[1]
     
     disp_map = np.zeros((h, w))
-    print(disp_map.shape)
     
     for i in tqdm.tqdm(range(block_size, w - block_size)):
         for j in range(block_size, h - block_size):
@@ -49,3 +54,4 @@ def ssd_correspond(img1, img2):
     disp_map = (disp_map - disp_map.min()) / (disp_map.max() - disp_map.min())
     plt.figure()
     plt.imshow(disp_map * 255)
+    

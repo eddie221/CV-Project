@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 from func import find_match, RANSAC_F, solve_translation, solve_rotation, normalize_point, solve_fundamental_matrix
 from rectified import rectified, rectified2, rect_test
-from correspondence import ssd_correspond
+from correspondence import correspond
 
 
 if __name__ == "__main__":
@@ -21,12 +21,15 @@ if __name__ == "__main__":
     #image_paths = glob.glob('./test2/*.jpg')
     img1 = cv2.imread(image_paths[0])
     img2 = cv2.imread(image_paths[1])
+    plt.imsave("./left.jpg", img1[..., ::-1])
+    
+    plt.imsave("./right.jpg", img2[..., ::-1])
     
     # solve F, T, R
-    match_keypoint1, match_keypoint2 = find_match(img1, img2)
+    match_keypoint1, match_keypoint2 = find_match(img1, img2, topK = 150, method = "ORB")
     #match_keypoint1, match_keypoint2, T1, T2 = normalize_point(img1, img2, match_keypoint1, match_keypoint2)
     #F = solve_fundamental_matrix(match_keypoint1, match_keypoint2)
-    F = RANSAC_F(match_keypoint1, match_keypoint2, threshold = 5e-4)
+    F = RANSAC_F(match_keypoint1, match_keypoint2, threshold = 1e-4)
     T = solve_translation(F, match_keypoint1, match_keypoint2)
     R = solve_rotation(F, T)
     print("F : \n", F)
@@ -43,17 +46,19 @@ if __name__ == "__main__":
     img1_rect, point1_rect, R_rect = rectified2(img1_gray, match_keypoint1, T)
     print("R_rect : \n", R_rect)
     plt.figure("img1 - rectified")
-    plt.imshow(img1_rect)
+    plt.imshow(img1_rect, cmap = "gray")
     plt.figure("img2 - rectified")
-    plt.imshow(img2_rect)
+    plt.imshow(img2_rect, cmap = "gray")
     #rect_test(img1, img2, match_keypoint1, match_keypoint2, F, T)
     
-    # sum square distance
-    ssd_correspond(img1_rect, img2_rect)
-    image_paths = glob.glob('./barn1/*.pgm')
-    gt1 = cv2.imread(image_paths[0])
-    plt.figure()
-    plt.imshow(gt1)
+    # correspond
+# =============================================================================
+#     correspond(img1_rect, img2_rect)
+#     image_paths = glob.glob('./barn1/*.pgm')
+#     gt1 = cv2.imread(image_paths[0])
+#     plt.figure()
+#     plt.imshow(gt1)
+# =============================================================================
     
     
 # =============================================================================
