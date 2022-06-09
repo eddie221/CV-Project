@@ -11,6 +11,13 @@
 
 ## Dataset:
  - https://vision.middlebury.edu/stereo/data/scenes2001/
+ 
+## Result
+- Original  
+![Test](/figure/basic.png)
+
+- Paper2  
+![Test](/figure/paper2.png)
 
 ## Reference:
 1. Get T and R from Essential Matrix. 
