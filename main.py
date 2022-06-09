@@ -13,6 +13,7 @@ import cv2
 from func import find_match, RANSAC_F, solve_translation, solve_rotation, normalize_point, solve_fundamental_matrix
 from rectified import rectified, rectified2, rectified22, rect_test
 from correspondence import correspond, SW_correspond
+from wavelet import iter_wavelet
 
 
 if __name__ == "__main__":
@@ -23,6 +24,11 @@ if __name__ == "__main__":
     img2 = cv2.imread(image_paths[1])
     plt.imsave("./left.jpg", img1[..., ::-1])
     plt.imsave("./right.jpg", img2[..., ::-1])
+    result = cv2.imread("./sw_result.png")
+# =============================================================================
+#     plt.figure()
+#     plt.imshow(result[..., 0] / 255)
+# =============================================================================
     
     # solve F, T, R
     match_keypoint1, match_keypoint2 = find_match(img1, img2, topK = 150, method = "ORB")
@@ -52,9 +58,11 @@ if __name__ == "__main__":
     #rect_test(img1, img2, match_keypoint1, match_keypoint2, F, T)
     
     # correspond
-    SW_correspond(img1_rect, img2_rect)
+    disp_map = SW_correspond(img1_rect, img2_rect)
+    refine_disp = iter_wavelet(disp_map)
     image_paths = glob.glob('./barn1/*.pgm')
     gt1 = cv2.imread(image_paths[0])
+    plt.imsave("refine_disp.png", refine_disp, cmap = "gray")
 # =============================================================================
 #     plt.figure()
 #     plt.imshow(gt1)

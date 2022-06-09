@@ -7,7 +7,8 @@
 - [X] Get the Disparity Map (in correspondence.py) (version 0.9)
 - [ ] Get the Depth Map (in func.py) (version 1.0)
 - ~~The unstable reason because for using RANSAC to get F~~ Change the feature extractor from SIFT to ORB (solved!)
-- [X] Paper implement : [Adaptive support-weight approach for correspondence search](https://ieeexplore.ieee.org/document/1597121 "Paper1")
+- [X] Paper1 implement : [Depth estimation from stereo images using sparsity](https://ieeexplore.ieee.org/document/5655864/ "Paper1")
+- [X] Paper2 implement : [Adaptive support-weight approach for correspondence search](https://ieeexplore.ieee.org/document/1597121 "Paper2")
 
 ## Dataset:
  - https://vision.middlebury.edu/stereo/data/scenes2001/
@@ -15,6 +16,9 @@
 ## Result
 - Original  
 ![Test](/figure/basic.png)
+
+- Paper1
+![Test](/figure/refine_disp.png)
 
 - Paper2  
 ![Test](/figure/paper2.png)
