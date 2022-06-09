@@ -166,18 +166,37 @@ def solve_translation(F, point1, point2):
 #     t = np.array([x, y, z])
 #     print(t / t[-1])
 # =============================================================================
+
     u, s, vt = np.linalg.svd(np.matmul(F, F.T))
     T = vt[-1]
-    T = T / np.sum(T * T)
+    #T = T / np.sum(T * T)
     if T[0] < 0:
         T = -T
     return T
 
 def solve_rotation(F, T):
-    W = np.array([[0, -1, 0],
-                  [1, 0, 0],
+    # other method to check (from wiki)
+    W_inv = np.array([[0, 1, 0],
+                  [-1, 0, 0],
                   [0, 0, 1.]])
     u, vs, vt = np.linalg.svd(F)
-    R = np.dot(np.dot(u, np.linalg.inv(W)), u)
+    R = np.dot(np.dot(u, W_inv), vt)
+    if np.linalg.det(R) < 0:
+        print("R reflect")
+        R = np.dot(R, np.array([[-1, 0, 0],
+                                [0, 1, 0],
+                                [0, 0, 1]]))
+# =============================================================================
+#     print(R / R[-1, -1])
+#     print(np.linalg.det(R))
+#     print(np.cross(F[:, 0], T))
+#     R = np.array([np.cross(F[:, 0], T) + np.cross(F[:, 1], F[:, 2]), 
+#                   np.cross(F[:, 1], T) + np.cross(F[:, 2], F[:, 0]),
+#                   np.cross(F[:, 2], T) + np.cross(F[:, 0], F[:, 1])])
+#     R = R / R[-1, -1]
+#     print(R / R[-1, -1])
+#     print(np.dot(R[:, 0], R[:, 1]))
+#     print(np.linalg.det(R))
+# =============================================================================
     return R
 

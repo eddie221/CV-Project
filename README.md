@@ -6,7 +6,8 @@
 - [X] Rectified two images (in rectified.py) (version 0.8) (using openCV to solve)
 - [X] Get the Disparity Map (in correspondence.py) (version 0.9)
 - [ ] Get the Depth Map (in func.py) (version 1.0)
-- The unstable reason because for using RANSAC to get F
+- ~~The unstable reason because for using RANSAC to get F~~ Change the feature extractor from SIFT to ORB (solved!)
+- [ ] Paper implement : [Adaptive support-weight approach for correspondence search](https://ieeexplore.ieee.org/document/1597121 "Paper1")
 
 ## Dataset:
  - https://vision.middlebury.edu/stereo/data/scenes2001/
@@ -21,3 +22,4 @@
  
 2. Similar work
  - https://github.com/savnani5/Depth-Estimation-using-Stereovision
+ 

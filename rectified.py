@@ -26,7 +26,41 @@ def rectified(img1, img2, point1, point2, F):
     
     return img1_rect, img2_rect, point1_rect, point2_rect
 
-def rectified2(img, point, T):
+def rectified2(img, point, T, R = None):
+    H, W = img.shape[:2]
+    e1 = T / np.sum(T ** 2)
+    e2 = np.array([-T[1], T[0], 0]) / np.sqrt(np.sum(T[0] ** 2 + T[1] ** 2))
+    e3 = np.cross(e1, e2)
+    R_rect = np.array([e1, e2, e3])
+    if R is not None:
+        R_rect = np.matmul(R, R_rect)
+        print(R_rect)
+        
+    corner = np.array([[0, 0, 1],
+                        [img.shape[1], 0, 1],
+                        [0, img.shape[0], 1],
+                        [img.shape[1], img.shape[0], 1]])
+    
+    new_corner = np.dot(R_rect, corner.T).T
+    new_corner = new_corner / new_corner[:, -1:]
+    
+    offset_x = abs(new_corner[:, 0].min())
+    offset_y = abs(new_corner[:, 1].min())
+# =============================================================================
+#     offset = np.array([[1, 0, offset_x],
+#                        [0, 1, offset_y],
+#                        [0, 0, 1]])
+#     R_rect = np.dot(offset, R_rect)
+# =============================================================================
+    
+    img_rect = cv2.warpPerspective(img, R_rect, (W, H))
+                                   #(int(new_corner[:, 0].max() - new_corner[:, 0].min()),
+                                   # int(new_corner[:, 1].max() - new_corner[:, 1].min())))
+    point = np.dot(point, R_rect)
+    point = point / point[:, -1:]
+    return img_rect, point, R_rect
+
+def rectified22(img, point, T, R):
     e1 = T / np.sum(T ** 2)
     e2 = np.array([-T[1], T[0], 0]) / np.sqrt(np.sum(T[0] ** 2 + T[1] ** 2))
     e3 = np.cross(e1, e2)
@@ -42,11 +76,11 @@ def rectified2(img, point, T):
     
     offset_x = abs(new_corner[:, 0].min())
     offset_y = abs(new_corner[:, 1].min())
-    
     offset = np.array([[1, 0, offset_x],
                        [0, 1, offset_y],
                        [0, 0, 1]])
     R_rect = np.dot(offset, R_rect)
+    R_rect = np.dot(np.linalg.inv(R), R_rect)
     
     img_rect = cv2.warpPerspective(img, R_rect,
                                    (int(new_corner[:, 0].max() - new_corner[:, 0].min()),
