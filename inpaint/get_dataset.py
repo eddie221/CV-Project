@@ -55,13 +55,20 @@ class InpaintDataset(data.Dataset):
         ret = {}
         mask = self.get_mask()
         img = self.imgs[index]
+        print("Image shape is ",img.shape)
+        c,h,w = img.shape
         
         # Introduce some noise
         cond_image = img*(1. - mask) + mask*torch.randn_like(img)
+        print("Max of image is :",torch.max(img))
+        masky = (torch.randn((h,w))*(30/255)).unsqueeze(0).repeat(3,1,1)
+        print("Masky size is : ",masky.shape)
+        use_image = img + masky*mask# Scale the std to be lower
         mask_img = img*(1. - mask) + mask
 
         ret['gt_image'] = img
         ret['cond_image'] = cond_image
+        ret['use_image'] = use_image
         ret['mask_image'] = mask_img
         ret['mask'] = mask
         # ret['path'] = path.rsplit("/")[-1].rsplit("\\")[-1]
@@ -77,7 +84,7 @@ class InpaintDataset(data.Dataset):
             h, w = self.image_size
             mask = bbox2mask(self.image_size, (h//4, w//4, h//2, w//2))
         elif self.mask_mode == 'irregular':
-            mask = get_irregular_mask(self.image_size)
+            mask = get_irregular_mask(self.image_size,area_ratio_range=(0.05,0.10))
         elif self.mask_mode == 'free_form':
             mask = brush_stroke_mask(self.image_size)
         elif self.mask_mode == 'hybrid':

@@ -6,6 +6,10 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
+def pot_holes():
+    pass
+
+
 def random_cropping_bbox(img_shape=(256,256), mask_mode='onedirection'):
     h, w = img_shape
     if mask_mode == 'onedirection':
@@ -314,7 +318,6 @@ def random_irregular_mask(img_shape,
     mask = np.expand_dims(mask, axis=2)
 
     return mask
-
 
 def get_irregular_mask(img_shape, area_ratio_range=(0.15, 0.5), **kwargs):
     """Get irregular mask with the constraints in mask ratio
