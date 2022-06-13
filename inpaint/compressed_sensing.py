@@ -14,6 +14,11 @@ class MedianFilter():
 class Operator(object):
     def __init__(self):
         pass
+def soft_threshold(coeffs,lamby):
+    sign = np.ones_like(coeffs)
+    sign[coeffs<0]  = -1
+    return np.multiply(sign,np.abs(coeffs)-lamby)
+
 
 class DWT_Operator(Operator):
     def __init__(self,img_shape):
@@ -252,11 +257,11 @@ class CompressedSensing(object):
         init_thresh = img_median
 
         decrease_by = 0.6
-        iterations = 30
+        iterations = 300
         #thresholds = [init_thresh*0.6**(i) for i in range(iterations)]
         #percnt_thresh = [0.6**i for i in range(iterations)]
-        thresholds = np.linspace(img_median,0.01,30)
-        thresholds = np.arange(1,)
+        thresholds = np.linspace(1,1/255,iterations)
+        #thresholds = np.arange(1,1/255,30)
 
         for thresh in thresholds:
             print("At threshold {}".format(thresh))
@@ -269,13 +274,14 @@ class CompressedSensing(object):
             coeffs = self.opt.decompose(X_n + R)
             #show_img(coeffs)
             # Do thresholding
-            sort_coeffs = np.sort(np.abs(coeffs.flatten()))
-            nth_biggest = sort_coeffs[int((1-thresh)*len(sort_coeffs))]
-            thresh_mask = abs(coeffs) < nth_biggest
+            # sort_coeffs = np.sort(np.abs(coeffs.flatten()))
+            # nth_biggest = sort_coeffs[int((1-thresh)*len(sort_coeffs))]
+            # thresh_mask = abs(coeffs) < nth_biggest
             #thresh_mask = abs(coeffs) < thresh
-            print("We are pruning wavelet: {} values because they are below {} magnitude"
-                  .format(np.sum(thresh_mask),thresh))
-            coeffs[thresh_mask] = 0
+            # print("We are pruning wavelet: {} values because they are below {} magnitude"
+                  # .format(np.sum(thresh_mask),thresh))
+            coeffs = soft_threshold(coeffs,thresh)
+            # coeffs[thresh_mask] = 0
             # Reconstruct
             X_n = self.opt.compose(coeffs)
             print("Current X_n")
@@ -290,12 +296,13 @@ class CompressedSensing(object):
             # Calculate DCT Transform
             dct_tran = DCT_Transform(X_t+R)
             dct_coeffs = dct_tran.block_forward()
+            dct_coeffs  = soft_threshold(dct_coeffs,thresh)
             #show_img(dct_coeffs)
             #sort_coeffs = np.sort(np.abs(dct_coeffs.flatten()))
             # nth_smallest = sort_coeffs[int(thresh*len(sort_coeffs))]
-            thresh_mask = abs(dct_coeffs) < thresh
-            print("We are pruning dct: {} values because they are below {} magnitude"
-                    .format(np.sum(thresh_mask),thresh))
+            # thresh_mask = abs(dct_coeffs) < thresh
+            # print("We are pruning dct: {} values because they are below {} magnitude"
+                    # .format(np.sum(thresh_mask),thresh))
             # dct_coeffs[thresh_mask]  
             # Reconstruct
             X_t = dct_tran.block_inv(dct_coeffs)
