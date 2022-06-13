@@ -4,6 +4,7 @@ import math
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw
+import matplotlib.pyplot as plt
 
 
 def pot_holes():
@@ -339,3 +340,18 @@ def get_irregular_mask(img_shape, area_ratio_range=(0.15, 0.5), **kwargs):
         mask = random_irregular_mask(img_shape, **kwargs)
 
     return mask
+
+def compare_images(images,shape):
+
+    _,axs = plt.subplots(shape[0],shape[1]+1,sharey=True,dpi=300)
+    h,w = shape
+    # for idx in range(len(images)):
+        # j = idx//w 
+        # i = idx & w
+    axs[0].imshow(images[0],cmap='gray')
+    axs[1].imshow(images[1],cmap='gray')
+    diff = abs(images[0]-images[1])
+    axs[-1].imshow(diff,cmap='gray')
+    plt.show()
+    plt.close()
+    
