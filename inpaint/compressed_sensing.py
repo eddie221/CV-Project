@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from numpy import r_
 import scipy
+from .utils import compare_images
 
 class MedianFilter():
     def __init__(self):
@@ -17,7 +18,7 @@ class Operator(object):
 class DWT_Operator(Operator):
     def __init__(self,img_shape):
         w,h = img_shape
-        self.op = lop.dwt2D((w,h),wavelet='haar',level=2)
+        self.op = lop.dwt2D((w,h),wavelet='haar',level=3)
         self.op = lop.jit(self.op)
 
     def decompose_rgb(self,img):
@@ -131,7 +132,7 @@ def median_filter(img):
     h,w = img.shape
 
     # Add Padding to the Image
-    ksize = 3
+    ksize = 9
     p_img = np.pad(img,(ksize,ksize))
     result = np.zeros_like(img)
 
@@ -143,6 +144,13 @@ def median_filter(img):
                 i-ksize:i+ksize])
 
     return result
+
+def black_mask(image):
+    mask = np.copy(image)
+    mask[image > 0.25] = 1
+    mask[image <= 0.25] = 0
+    return mask
+    
 
 class DCT_Transform(object):
 
@@ -182,8 +190,8 @@ class DCT_Transform(object):
 
 
 def show_img(img):
-
-    plt.imshow(img,cmap='gray')
+    plt.figure(dpi=150)
+    plt.imshow(img,cmap='gray',vmin=0,vmax=1)
     plt.show()
     #plt.waitforbuttonpress(0)
     plt.close()
@@ -192,7 +200,7 @@ def show_img(img):
 def median_mask(img,median,threshold):
     diff = abs(img-median)
     mask = diff > threshold
-    return mask
+    return 1-mask
 
 class CompressedSensing(object):
 
@@ -237,46 +245,63 @@ class CompressedSensing(object):
         # X = self.image
         X_t = np.zeros_like(self.image)
         X_n = np.copy(self.image)
-        thresholds = [0.45,0.20,0.15]
+        # thresholds = [0.45,0.20,0.15]
         # delta = lamby * L_max
 
+        img_median = np.median(self.image)
+        init_thresh = img_median
+
+        decrease_by = 0.6
+        iterations = 30
+        #thresholds = [init_thresh*0.6**(i) for i in range(iterations)]
+        #percnt_thresh = [0.6**i for i in range(iterations)]
+        thresholds = np.linspace(img_median,0.01,30)
+        thresholds = np.arange(1,)
+
         for thresh in thresholds:
+            print("At threshold {}".format(thresh))
             # PART A
             # Calculate residual
-            old_xt = np.copy(X_t)
-            R = np.multiply(self.mask,(self.image-X_t-X_n))
+            R = np.clip(np.multiply(self.mask,(self.image-X_t-X_n)),0,1)
+            print("First Residual")
+            #show_img(R)
             # Calculate the Wavelet Transform 
             coeffs = self.opt.decompose(X_n + R)
-            show_img(coeffs)
+            #show_img(coeffs)
             # Do thresholding
             sort_coeffs = np.sort(np.abs(coeffs.flatten()))
-            nth_smallest = sort_coeffs[-int(thresh*len(sort_coeffs))]
-            thresh_mask = abs(coeffs) < nth_smallest
-            # thresh_mask = abs(coeffs) < 0.1
+            nth_biggest = sort_coeffs[int((1-thresh)*len(sort_coeffs))]
+            thresh_mask = abs(coeffs) < nth_biggest
+            #thresh_mask = abs(coeffs) < thresh
             print("We are pruning wavelet: {} values because they are below {} magnitude"
-                    .format(np.sum(thresh_mask),nth_smallest))
+                  .format(np.sum(thresh_mask),thresh))
             coeffs[thresh_mask] = 0
             # Reconstruct
             X_n = self.opt.compose(coeffs)
+            print("Current X_n")
+            show_img(X_n)
+
 
             # Calculate the Wavelet Transform 
-
             # PART B
             # Calculate Residual
-            R = np.multiply(self.mask,(self.image-old_xt-X_n))
+            R = np.multiply(self.mask,(self.image-X_t-X_n))
+            R = np.clip(R,0,1)
             # Calculate DCT Transform
-            dct_tran = DCT_Transform(R)
+            dct_tran = DCT_Transform(X_t+R)
             dct_coeffs = dct_tran.block_forward()
-            show_img(dct_coeffs)
-            sort_coeffs = np.sort(np.abs(dct_coeffs.flatten()))
-            nth_smallest = sort_coeffs[-int(thresh*len(sort_coeffs))]
-            thresh_mask = abs(dct_coeffs) < nth_smallest
+            #show_img(dct_coeffs)
+            #sort_coeffs = np.sort(np.abs(dct_coeffs.flatten()))
+            # nth_smallest = sort_coeffs[int(thresh*len(sort_coeffs))]
+            thresh_mask = abs(dct_coeffs) < thresh
             print("We are pruning dct: {} values because they are below {} magnitude"
-                    .format(np.sum(thresh_mask),nth_smallest))
-            dct_coeffs[thresh_mask]  
+                    .format(np.sum(thresh_mask),thresh))
+            # dct_coeffs[thresh_mask]  
             # Reconstruct
             X_t = dct_tran.block_inv(dct_coeffs)
+            
 
+        compare_images([X_t,X_n],(1,2))
         return X_t+X_n
 
     def iterator_not_working(self,iterations):

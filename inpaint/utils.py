@@ -343,13 +343,13 @@ def get_irregular_mask(img_shape, area_ratio_range=(0.15, 0.5), **kwargs):
 
 def compare_images(images,shape):
 
-    _,axs = plt.subplots(shape[0],shape[1]+1,sharey=True,dpi=300)
+    _,axs = plt.subplots(shape[0],shape[1]+1,sharey=True,dpi=150)
     h,w = shape
     # for idx in range(len(images)):
         # j = idx//w 
         # i = idx & w
-    axs[0].imshow(images[0],cmap='gray')
-    axs[1].imshow(images[1],cmap='gray')
+    axs[0].imshow(images[0],cmap='gray',vmin=0,vmax=1)
+    axs[1].imshow(images[1],cmap='gray',vmin=0,vmax=1)
     diff = abs(images[0]-images[1])
     axs[-1].imshow(diff,cmap='gray')
     plt.show()
