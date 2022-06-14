@@ -15,6 +15,8 @@ def rectified(img1, img2, point1, point2, F):
     point1_rect = np.zeros((point1.shape))
     point2_rect = np.zeros((point2.shape))    
     _, H1, H2 = cv2.stereoRectifyUncalibrated(point1, point2, F, imgSize=(w1, h1))
+    print("H1 : \n", H1)
+    print("H2 : \n", H2)
     for i in range(point1.shape[0]):
         tmp = np.dot(H1, point1[i])
         point1_rect[i] = tmp / tmp[-1]
@@ -26,7 +28,7 @@ def rectified(img1, img2, point1, point2, F):
     
     return img1_rect, img2_rect, point1_rect, point2_rect
 
-def rectified2(img, point, T, R = None):
+def rectified2(img, T, point = None, R = None):
     H, W = img.shape[:2]
     e1 = T / np.sum(T ** 2)
     e2 = np.array([-T[1], T[0], 0]) / np.sqrt(np.sum(T[0] ** 2 + T[1] ** 2))
@@ -34,7 +36,7 @@ def rectified2(img, point, T, R = None):
     R_rect = np.array([e1, e2, e3])
     if R is not None:
         R_rect = np.matmul(R, R_rect)
-        print(R_rect)
+    print("R_rect : \n", R_rect)
         
     corner = np.array([[0, 0, 1],
                         [img.shape[1], 0, 1],
@@ -56,9 +58,12 @@ def rectified2(img, point, T, R = None):
     img_rect = cv2.warpPerspective(img, R_rect, (W, H))
                                    #(int(new_corner[:, 0].max() - new_corner[:, 0].min()),
                                    # int(new_corner[:, 1].max() - new_corner[:, 1].min())))
-    point = np.dot(point, R_rect)
-    point = point / point[:, -1:]
-    return img_rect, point, R_rect
+    if point is not None:
+        point = np.dot(point, R_rect)
+        point = point / point[:, -1:]
+        return img_rect, point, R_rect
+    else:
+        return img_rect, R_rect
 
 def rectified22(img, point, T, R):
     e1 = T / np.sum(T ** 2)

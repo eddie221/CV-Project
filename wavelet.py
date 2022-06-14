@@ -87,7 +87,6 @@ def iter_wavelet(img, iteration = 3, decomposed_layer = 2):
         for j in range(decomposed_layer):
             hh_img, hl_img, lh_img, ll_img = wavelet(img)
             tmp.append([hh_img, hl_img, lh_img, ll_img])
-            print(np.sum(tmp[-1][0]))
             for k in range(3):
                 # hard threshold
                 tmp[-1][k][tmp[-1][k] < threshold] = 0

@@ -17,7 +17,7 @@
 - Original  
 ![Test](/figure/basic.png)
 
-- Paper1
+- Paper1  
 ![Test](/figure/refine_disp.png)
 
 - Paper2  

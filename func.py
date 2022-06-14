@@ -176,8 +176,8 @@ def solve_translation(F, point1, point2):
 
 def solve_rotation(F, T):
     # other method to check (from wiki)
-    W_inv = np.array([[0, 1, 0],
-                  [-1, 0, 0],
+    W_inv = np.array([[0, -1, 0],
+                  [1, 0, 0],
                   [0, 0, 1.]])
     u, vs, vt = np.linalg.svd(F)
     R = np.dot(np.dot(u, W_inv), vt)
