@@ -5,6 +5,7 @@ import pywt
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from numpy import r_
+import tensorflow as tf
 import scipy
 from .utils import compare_images
 
@@ -23,7 +24,7 @@ def soft_threshold(coeffs,lamby):
 class DWT_Operator(Operator):
     def __init__(self,img_shape):
         w,h = img_shape
-        self.op = lop.dwt2D((w,h),wavelet='haar',level=3)
+        self.op = lop.dwt2D((w,h),wavelet='haar',level=1)
         self.op = lop.jit(self.op)
 
     def decompose_rgb(self,img):
@@ -160,8 +161,9 @@ def black_mask(image):
 class DCT_Transform(object):
 
     # TODO implement by yourself later
-    def __init__(self,img):
+    def __init__(self,img,bsize=8):
         self.img = img
+        self.bsize = bsize
         self.dct_matrix = np.zeros_like(img)
     def compute(self):
         h,w = self.image.shape
@@ -177,17 +179,19 @@ class DCT_Transform(object):
         return scipy.fftpack.idct(scipy.fftpack.idct(coeff,axis=0,norm='ortho'),axis=1,norm='ortho')
     def block_forward(self):
         h,w = self.img.shape
+        bsize = self.bsize# Block Size
         dct = np.zeros_like(self.img)
-        for i in r_[:h:8]:
-            for j in r_[:w:8]:
-                dct[i:(i+8),j:(j+8)] = self.forward_3p(self.img[i:(i+8),j:(j+8)])
+        for i in r_[:h:bsize]:
+            for j in r_[:w:bsize]:
+                dct[i:(i+bsize),j:(j+bsize)] = self.forward_3p(self.img[i:(i+bsize),j:(j+bsize)])
         return dct
     def block_inv(self,coeff):
         h,w = coeff.shape
+        bsize = self.bsize
         im_dct = np.zeros_like(coeff)
-        for i in r_[:h:8]:
-            for j in r_[:w:8]:
-                im_dct[i:(i+8),j:(j+8)] = self.inv_3p(coeff[i:(i+8),j:(j+8)] )
+        for i in r_[:h:bsize]:
+            for j in r_[:w:bsize]:
+                im_dct[i:(i+bsize),j:(j+bsize)] = self.inv_3p(coeff[i:(i+bsize),j:(j+bsize)] )
         return im_dct
                 
         
@@ -216,34 +220,7 @@ class CompressedSensing(object):
         self.it_step = 0.1
         self.X_n = self.image
         self.X_t = 0
-    def iterator(self,iterations):
-        # Set your initial Guess
-        # X = self.image
-        X_t = np.copy(self.image)
-        #X_t = np.zeros_like(self.image)
-        # thresholds = [0.1,0.05,0.01,0.005]
-        # thresholds = [0.1,0.05,0.01,0.005]
-        thresholds = [0.45,0.20,0.15]
-        
-        for thresh in thresholds:
-            # Calculate residual
-            R = np.multiply(self.mask,(self.image-X_t))
-            # Calculate the Transform
-            coeffs = self.opt.decompose(X_t + R)
-            # Get nth smallest
-            sort_coeffs = np.sort(np.abs(coeffs.flatten()))
-            nth_smallest = sort_coeffs[-int(thresh*len(sort_coeffs))]
 
-            # Hard Threshold
-            thresh_mask = abs(coeffs) < nth_smallest
-            # thresh_mask = abs(coeffs) < 0.1
-            print("We are pruning : {} values because they are below {} magnitude"
-                    .format(np.sum(thresh_mask),nth_smallest))
-            # coeffs[thresh_mask] = 0
-
-            # Reconstruct
-            X_t = self.opt.compose(coeffs)
-        return X_t
 
     def iterator_twodict(self,L_max=0.01):
         # Set your initial Guess
@@ -257,10 +234,11 @@ class CompressedSensing(object):
         init_thresh = img_median
 
         decrease_by = 0.6
-        iterations = 300
+        iterations = 100
         #thresholds = [init_thresh*0.6**(i) for i in range(iterations)]
         #percnt_thresh = [0.6**i for i in range(iterations)]
         thresholds = np.linspace(1,1/255,iterations)
+        mu = 0.01
         #thresholds = np.arange(1,1/255,30)
 
         for thresh in thresholds:
@@ -272,14 +250,6 @@ class CompressedSensing(object):
             #show_img(R)
             # Calculate the Wavelet Transform 
             coeffs = self.opt.decompose(X_n + R)
-            #show_img(coeffs)
-            # Do thresholding
-            # sort_coeffs = np.sort(np.abs(coeffs.flatten()))
-            # nth_biggest = sort_coeffs[int((1-thresh)*len(sort_coeffs))]
-            # thresh_mask = abs(coeffs) < nth_biggest
-            #thresh_mask = abs(coeffs) < thresh
-            # print("We are pruning wavelet: {} values because they are below {} magnitude"
-                  # .format(np.sum(thresh_mask),thresh))
             coeffs = soft_threshold(coeffs,thresh)
             # coeffs[thresh_mask] = 0
             # Reconstruct
@@ -294,54 +264,22 @@ class CompressedSensing(object):
             R = np.multiply(self.mask,(self.image-X_t-X_n))
             R = np.clip(R,0,1)
             # Calculate DCT Transform
-            dct_tran = DCT_Transform(X_t+R)
+            dct_tran = DCT_Transform(X_t+R,bsize=8)
             dct_coeffs = dct_tran.block_forward()
             dct_coeffs  = soft_threshold(dct_coeffs,thresh)
             #show_img(dct_coeffs)
-            #sort_coeffs = np.sort(np.abs(dct_coeffs.flatten()))
-            # nth_smallest = sort_coeffs[int(thresh*len(sort_coeffs))]
-            # thresh_mask = abs(dct_coeffs) < thresh
-            # print("We are pruning dct: {} values because they are below {} magnitude"
-                    # .format(np.sum(thresh_mask),thresh))
-            # dct_coeffs[thresh_mask]  
             # Reconstruct
             X_t = dct_tran.block_inv(dct_coeffs)
+            
+            
+            # Part C Total Variation
+            total_variation = tf.image.total_variation(tf.convert_to_tensor(np.expand_dims(X_n, 2)))
+            total_variation = (1/1000000)*total_variation.numpy()
+            X_n = X_n - mu*total_variation
             
 
         compare_images([X_t,X_n],(1,2))
         return X_t+X_n
-
-    def iterator_not_working(self,iterations):
-        # Set your initial Guess
-        # X = self.image
-        X_t = np.copy(self.image)
-        # thresholds = [0.1,0.05,0.01,0.005]
-        thresholds = [0.8,0.45,0.20,0.15]
-        
-        for thresh in thresholds:
-            # Calculate residual
-            R = np.multiply(self.mask,(self.image - X_t))
-            # Calculate the Transform
-            coeffs = self.opt.decompose(X_t + R)
-            # Get nth smallest
-            sort_coeffs = np.sort(np.abs(coeffs))
-            nth_smallest = sort_coeffs.flatten()[-int(thresh*len(sort_coeffs))]
-
-            # Hard Threshold
-            # thresh_mask = abs(coeffs) < nth_smallest
-            thresh_mask = abs(coeffs) < 0.1
-            
-            print("We are pruning : {} values because they are below {} magnitude"
-                    .format(np.sum(thresh_mask),nth_smallest))
-            coeffs[thresh_mask] = 0
-
-            # Reconstruct
-            X_t = self.opt.compose(coeffs)
-
-        return X_t
-
-
-
 
 
 

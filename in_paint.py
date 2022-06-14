@@ -11,8 +11,8 @@ if __name__ == '__main__':
     # Load the dataset
     data_root = 'inpaint/celeba_hq_256/'
     mask_mode = 'irregular'
-    single_image = './inpaint/images/easier.png'
-    #single_image = './inpaint/images/sw_result.png'
+    #single_image = './inpaint/images/easier.png'
+    single_image = './inpaint/images/sw_result.png'
 
     # dataset = inpaint.InpaintDataset(data_root,mask_mode)
     # img1 = dataset[0]
@@ -27,8 +27,8 @@ if __name__ == '__main__':
     img = np.divide(img,255)
     print("Image shape {}".format(img.shape))
     median = inpaint.median_filter(img)
-    #mask = inpaint.median_mask(img,median,0.1)
-    mask = inpaint.black_mask(img)
+    mask = inpaint.median_mask(img,median,0.1)
+    #mask = inpaint.black_mask(img)
 
 
     # Show messed up image
